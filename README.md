@@ -19,3 +19,16 @@ The Example of usage [Whatsmeow WhatsApp API](https://github.com/tulir/whatsmeow
 # Author
 
 - [Author] (https://github.com/alipbudiman) Alif budiman
+
+# Run
+
+```
+$ go build main.go
+$ ./main.go
+```
+
+or
+
+```
+$ go run main.go
+```
