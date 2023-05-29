@@ -18,7 +18,7 @@ The Example of usage [Whatsmeow WhatsApp API](https://github.com/tulir/whatsmeow
 
 # Author
 
-- [Author] (https://github.com/alipbudiman) Alif budiman
+- [Author](https://github.com/alipbudiman) Alif budiman
 
 # Run
 
