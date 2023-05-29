@@ -52,3 +52,30 @@ func parseJID(arg string) (types.JID, bool) {
 		return recipient, true
 	}
 }
+
+func RemoveMyJID(listdata []string, myJID types.JID) []string {
+	dataArry := listdata
+	for _, x := range dataArry {
+		if fmt.Sprintf("%v", myJID) == x {
+			dataArry = Remove(dataArry, x)
+		}
+	}
+	return dataArry
+}
+
+func Remove(s []string, r string) []string {
+	new := make([]string, len(s))
+	copy(new, s)
+	for i, v := range new {
+		if v == r {
+			return append(new[:i], new[i+1:]...)
+		}
+	}
+	return s
+}
+
+func MentionFormat(jid string) string {
+	m := strings.Split(jid, ".")[0]
+	m = strings.ReplaceAll(m, "@", "")
+	return "@" + strings.ReplaceAll(m, "s", "")
+}

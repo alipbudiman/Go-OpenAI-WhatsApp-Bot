@@ -18,6 +18,7 @@ import (
 	"go.mau.fi/whatsmeow"
 	"go.mau.fi/whatsmeow/store"
 	"go.mau.fi/whatsmeow/store/sqlstore"
+	"go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
 
 	waLog "go.mau.fi/whatsmeow/util/log"
@@ -30,6 +31,7 @@ type ClientWrapper struct {
 var (
 	Log    *logrus.Logger
 	Client *ClientWrapper
+	myJID  types.JID
 )
 
 func (cl *ClientWrapper) MessageHandler(evt interface{}) {
@@ -62,6 +64,7 @@ func (cl *ClientWrapper) MessageHandler(evt interface{}) {
 		if to == sender {
 			from_dm = true
 		}
+
 		if txt == "ping" {
 			cl.SendTextMessage(to, "Pong!")
 		} else if txt == "help" {
@@ -72,6 +75,17 @@ func (cl *ClientWrapper) MessageHandler(evt interface{}) {
 		} else if txt == "send video" {
 			cl.SendTextMessage(to, "Loading . . .")
 			cl.SendVideoMessage(to, "assets/vid/vid.mp4", ">_<")
+		}
+
+		if !from_dm {
+			if txt == "tag all" {
+				cl.SendTextMessage(to, "Loading . . .")
+				mem := cl.getMemberList(to)
+
+			} else if strings.HasPrefix(txt, "say: ") {
+				msg := txtV2[len("say: "):]
+				cl.SendTextMessage(to, msg)
+			}
 		}
 		return
 	default:
@@ -96,6 +110,10 @@ func main() {
 	}
 
 	deviceStore, err := container.GetFirstDevice()
+	makeJID, _ := helper.parseJID(fmt.Sprintf("%v", deviceStore.ID))
+	Resjid, _ := helper.SenderJIDConvert(makeJID)
+	myJID = Resjid
+
 	if err != nil {
 		panic(err)
 	}

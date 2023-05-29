@@ -166,3 +166,21 @@ func (cl *CLIENT) SendVideoMessage(jid types.JID, path string, caption string) {
 	cl.Client.SendMessage(context.Background(), jid, msg)
 	os.Remove(RethumbnailPath)
 }
+
+func (cl *CLIENT) getGroup(jid types.JID) *types.GroupInfo {
+	data, _ := cl.Client.GetGroupInfo(jid)
+	return data
+}
+
+func (cl *CLIENT) getMemberList(jid types.JID) []string {
+	memberList := []string{}
+	data := cl.getGroup(jid)
+	for _, x := range data.Participants {
+		cnv := fmt.Sprintf("%v", x)
+		cnv = strings.ReplaceAll(cnv, "{", "")
+		cnv = strings.ReplaceAll(cnv, "}", "")
+		listCnv := strings.Split(cnv, " ")
+		memberList = append(memberList, listCnv[0])
+	}
+	return memberList
+}
