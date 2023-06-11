@@ -14,11 +14,11 @@ The Example of usage [Whatsmeow WhatsApp API](https://github.com/tulir/whatsmeow
 
 - [Go](https://go.dev/) Version >= 1.19.9
 
-- [FFmpeg](https://ffmpeg.org/) FFmpeg
+- [FFmpeg](https://ffmpeg.org/)
 
 # Author
 
-- [Author] (https://github.com/alipbudiman) Alif budiman
+- [Alif budiman](https://github.com/alipbudiman)
 
 # Run
 
