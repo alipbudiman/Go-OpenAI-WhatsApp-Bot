@@ -62,6 +62,7 @@ func (cl *ClientWrapper) MessageHandler(evt interface{}) {
 		if to == sender {
 			from_dm = true
 		}
+		fmt.Println(from_dm)
 		if txt == "ping" {
 			cl.SendTextMessage(to, "Pong!")
 		} else if txt == "help" {
@@ -72,6 +73,9 @@ func (cl *ClientWrapper) MessageHandler(evt interface{}) {
 		} else if txt == "send video" {
 			cl.SendTextMessage(to, "Loading . . .")
 			cl.SendVideoMessage(to, "assets/vid/vid.mp4", ">_<")
+		} else if strings.HasPrefix(txt, "say: ") {
+			spl := txtV2[len("say: "):]
+			cl.SendTextMessage(to, spl)
 		}
 		return
 	default:
