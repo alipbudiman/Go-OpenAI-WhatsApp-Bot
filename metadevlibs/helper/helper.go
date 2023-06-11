@@ -34,6 +34,14 @@ func SenderJIDConvert(jid types.JID) (types.JID, bool) {
 	return jid, true
 }
 
+func ConvertJID(args string) (types.JID, bool) {
+	jid, ok := parseJID(args)
+	if ok {
+		return jid, true
+	}
+	return jid, false
+}
+
 func parseJID(arg string) (types.JID, bool) {
 	if arg[0] == '+' {
 		arg = arg[1:]

@@ -80,7 +80,14 @@ func (cl *ClientWrapper) MessageHandler(evt interface{}) {
 		if !from_dm {
 			if txt == "tag all" {
 				cl.SendTextMessage(to, "Loading . . .")
-				mem := cl.getMemberList(to)
+				mem := cl.GetMemberList(to)
+				mem = helper.RemoveMyJID(mem, myJID)
+				ret := "⌬ Mentionall\n"
+				for _, jid := range mem {
+					ret += "\n- " + helper.MentionFormat(jid)
+				}
+				ret += fmt.Sprintf("\n\nTotal %v user", len(mem))
+				cl.SendMention(to, ret, mem)
 
 			} else if strings.HasPrefix(txt, "say: ") {
 				msg := txtV2[len("say: "):]
@@ -110,7 +117,7 @@ func main() {
 	}
 
 	deviceStore, err := container.GetFirstDevice()
-	makeJID, _ := helper.parseJID(fmt.Sprintf("%v", deviceStore.ID))
+	makeJID, _ := helper.ConvertJID(fmt.Sprintf("%v", deviceStore.ID))
 	Resjid, _ := helper.SenderJIDConvert(makeJID)
 	myJID = Resjid
 

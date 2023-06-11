@@ -167,14 +167,26 @@ func (cl *CLIENT) SendVideoMessage(jid types.JID, path string, caption string) {
 	os.Remove(RethumbnailPath)
 }
 
-func (cl *CLIENT) getGroup(jid types.JID) *types.GroupInfo {
+func (cl *CLIENT) SendMention(jid types.JID, text string, mentionList []string) {
+	msg := &waProto.Message{
+		ExtendedTextMessage: &waProto.ExtendedTextMessage{
+			Text: proto.String(text),
+			ContextInfo: &waProto.ContextInfo{
+				MentionedJid: mentionList,
+			},
+		},
+	}
+	cl.Client.SendMessage(context.Background(), jid, msg)
+}
+
+func (cl *CLIENT) GetGroup(jid types.JID) *types.GroupInfo {
 	data, _ := cl.Client.GetGroupInfo(jid)
 	return data
 }
 
-func (cl *CLIENT) getMemberList(jid types.JID) []string {
+func (cl *CLIENT) GetMemberList(jid types.JID) []string {
 	memberList := []string{}
-	data := cl.getGroup(jid)
+	data := cl.GetGroup(jid)
 	for _, x := range data.Participants {
 		cnv := fmt.Sprintf("%v", x)
 		cnv = strings.ReplaceAll(cnv, "{", "")
