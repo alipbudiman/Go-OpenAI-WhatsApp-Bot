@@ -68,7 +68,7 @@ func (cl *ClientWrapper) MessageHandler(evt interface{}) {
 		if txt == "ping" {
 			cl.SendTextMessage(to, "Pong!")
 		} else if txt == "help" {
-			cl.SendTextMessage(to, helper.WriteDisplayMenu())
+			cl.SendTextMessage(to, helper.WriteDisplayMenu(from_dm))
 		} else if txt == "send image" {
 			cl.SendTextMessage(to, "Loading . . .")
 			cl.SendImageMessage(to, "assets/img/img.jpg", ">_<")

@@ -12,13 +12,17 @@ func TrackEvents(evt interface{}) {
 	fmt.Println("\033[34m\n", "[(>)", evt, "]", reflect.TypeOf(evt), "\033[0m")
 }
 
-func WriteDisplayMenu() string {
+func WriteDisplayMenu(from_dm bool) string {
 	h := "┎───「 MENU 」"
 	h += "\n⊶ help"
 	h += "\n⊶ ping"
 	h += "\n⊶ help"
 	h += "\n⊶ send image"
 	h += "\n⊶ send video"
+	if !from_dm {
+		h += "\n⊶ say: `query`"
+		h += "\n⊶ tag all"
+	}
 	return h
 }
 
