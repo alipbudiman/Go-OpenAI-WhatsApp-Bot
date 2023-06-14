@@ -16,10 +16,6 @@ The Example of usage [Whatsmeow WhatsApp API](https://github.com/tulir/whatsmeow
 
 - [FFmpeg](https://ffmpeg.org/)
 
-# Author
-
-- [Alif budiman](https://github.com/alipbudiman)
-
 # Run
 
 ```
@@ -32,3 +28,12 @@ or
 ```
 $ go run main.go
 ```
+
+# Author
+
+- [Alif budiman](https://github.com/alipbudiman)
+
+
+# Discussion
+
+- [WhatsApp Group](https://chat.whatsapp.com/Gbe7Y7NHpZXEaLoQRc6WpD)
