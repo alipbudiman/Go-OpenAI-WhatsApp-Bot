@@ -19,6 +19,7 @@ func WriteDisplayMenu(from_dm bool) string {
 	h += "\n⊶ help"
 	h += "\n⊶ send image"
 	h += "\n⊶ send video"
+	h += "\n⊶ chat gpt: `question`"
 	if !from_dm {
 		h += "\n⊶ say: `query`"
 		h += "\n⊶ tag all"
@@ -90,4 +91,19 @@ func MentionFormat(jid string) string {
 	m := strings.Split(jid, ".")[0]
 	m = strings.ReplaceAll(m, "@", "")
 	return "@" + strings.ReplaceAll(m, "s", "")
+}
+
+func LooperMessage(message string, cut_after int) []string {
+	var response []string
+	k := len(message) / cut_after
+	for aa := 0; aa <= k; aa++ {
+		start := aa * cut_after
+		end := (aa + 1) * cut_after
+		if end > len(message) {
+			end = len(message)
+		}
+		message := message[start:end]
+		response = append(response, message)
+	}
+	return response
 }

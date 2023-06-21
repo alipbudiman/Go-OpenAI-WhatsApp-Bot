@@ -1,8 +1,10 @@
-# WhatsApp Bot
+# Go-ChatGPT-WhatsApp-Bot
 
 [![GO](https://img.shields.io/badge/golang-v1.19.9^-blue)](https://go.dev/)&nbsp;&nbsp;[![UBUNTU](https://img.shields.io/badge/ubuntu-v18.0-orange)](https://releases.ubuntu.com/impish/)&nbsp;&nbsp;[![AUR](https://img.shields.io/aur/license/yaourt.svg)](https://github.com/fckveza/Whatsapp-Bot/blob/main/LICENSE)&nbsp;&nbsp;[![SOURCE](https://img.shields.io/badge/license-MIT-green)](https://github.com/alipbudiman/Golang-WhatsApp-Bot/blob/main/LICENSE)&nbsp;&nbsp;[![MIT LISENCE](https://img.shields.io/badge/sponsors-WhatsApp-brightgreen)](https://wa.me/6282113791904)
 
-WhatsApp MultiDevice Bot client API Example using Go Programming Language.
+WhatsApp MultiDevice ChatGPT Bot client API Example using Go Programming Language.
+
+![screen shoot](/assets/img/ss.jpg)
 
 The Example of usage [Whatsmeow WhatsApp API](https://github.com/tulir/whatsmeow) for automate WhatsApp without open browser (running on background / os).
 
@@ -16,9 +18,26 @@ The Example of usage [Whatsmeow WhatsApp API](https://github.com/tulir/whatsmeow
 
 - [FFmpeg](https://ffmpeg.org/)
 
+# Add OPEN AI Token
+
+```go
+var (
+	Log           *logrus.Logger
+	Client        *ClientWrapper
+	myJID         types.JID
+    //---------here----------------
+	ChatGPTApikey string = "" // << INSERT YOUR OPEN AI API HERE
+    //---------here----------------
+	ChatGPTProxy  string = ""
+)
+```
+
+To get open AI api-key, you cah visit open ai platform. [Click here](https://platform.openai.com/account/api-keys)
+
 # Run
 
 ```
+go env -w GO111MODULE=off
 $ go build main.go
 $ ./main.go
 ```
@@ -26,6 +45,7 @@ $ ./main.go
 or
 
 ```
+go env -w GO111MODULE=off
 $ go run main.go
 ```
 

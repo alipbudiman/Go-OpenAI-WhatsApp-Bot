@@ -8,12 +8,14 @@ import (
 	"reflect"
 	"strings"
 	"syscall"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/mdp/qrterminal"
 	"github.com/sirupsen/logrus"
 
 	"./metadevlibs/botlib"
+	"./metadevlibs/feature"
 	"./metadevlibs/helper"
 	"go.mau.fi/whatsmeow"
 	"go.mau.fi/whatsmeow/store"
@@ -29,9 +31,11 @@ type ClientWrapper struct {
 }
 
 var (
-	Log    *logrus.Logger
-	Client *ClientWrapper
-	myJID  types.JID
+	Log           *logrus.Logger
+	Client        *ClientWrapper
+	myJID         types.JID
+	ChatGPTApikey string = "" // << INSERT YOUR OPEN AI API HERE
+	ChatGPTProxy  string = ""
 )
 
 func (cl *ClientWrapper) MessageHandler(evt interface{}) {
@@ -56,6 +60,7 @@ func (cl *ClientWrapper) MessageHandler(evt interface{}) {
 			txtV2 = mobile_txt
 		}
 		sender := v.Info.Sender
+		senderSTR := fmt.Sprintf("%v", sender)
 		sender_jid, is_success := helper.SenderJIDConvert(sender)
 		if is_success {
 			sender = sender_jid
@@ -77,6 +82,26 @@ func (cl *ClientWrapper) MessageHandler(evt interface{}) {
 		} else if strings.HasPrefix(txt, "say: ") {
 			spl := txtV2[len("say: "):]
 			cl.SendTextMessage(to, spl)
+		} else if strings.HasPrefix(txt, "chat gpt: ") {
+			cl.SendTextMessage(to, "Process . . .")
+			question := txtV2[len("chat gpt: "):]
+			responGPT, err := feature.ChatGPT(sender, question)
+			if err != nil {
+				cl.SendTextMessage(to, "Error please check console for detail")
+				panic(err)
+			}
+			buildRespon := "*Chat GPT Response:*"
+			buildRespon += "\n" + responGPT
+			buildRespon += "\n\n____ [done] ____"
+			for _, msg := range helper.LooperMessage(buildRespon, 2000) {
+				cl.SendTextMessage(to, msg)
+				time.Sleep(1 * time.Second)
+			}
+			buildConvertation := "*Convertation*"
+			buildConvertation += "\nConvertation by: " + helper.MentionFormat(senderSTR)
+			buildConvertation += fmt.Sprintf("\nTotal convertation: %d", (len(feature.GPTMap[sender])-1)/2)
+			cl.SendMention(to, buildConvertation, []string{senderSTR})
+
 		}
 
 		if !from_dm {
@@ -112,6 +137,7 @@ func (cl *ClientWrapper) newClient(d *store.Device, l waLog.Logger) {
 }
 
 func main() {
+	feature.GPTConfig("", ChatGPTApikey, ChatGPTProxy)
 	dbLog := waLog.Stdout("Database", "DEBUG", true)
 	container, err := sqlstore.New("sqlite3", "file:commander.db?_foreign_keys=on", dbLog)
 	if err != nil {
