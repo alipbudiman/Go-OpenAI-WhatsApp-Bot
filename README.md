@@ -1,6 +1,6 @@
 # Go-ChatGPT-WhatsApp-Bot
 
-[![GO](https://img.shields.io/badge/golang-v1.19.9^-blue)](https://go.dev/)&nbsp;&nbsp;[![UBUNTU](https://img.shields.io/badge/ubuntu-v18.0-orange)](https://releases.ubuntu.com/impish/)&nbsp;&nbsp;[![AUR](https://img.shields.io/aur/license/yaourt.svg)](https://github.com/fckveza/Whatsapp-Bot/blob/main/LICENSE)&nbsp;&nbsp;[![SOURCE](https://img.shields.io/badge/license-MIT-green)](https://github.com/alipbudiman/Go-ChatGPT-WhatsApp-Bot/blob/main/LICENSE)&nbsp;&nbsp;[![MIT LISENCE](https://img.shields.io/badge/sponsors-WhatsApp-brightgreen)](https://wa.me/6282113791904)
+[![GO](https://img.shields.io/badge/golang-v1.19.9^-blue)](https://go.dev/)&nbsp;&nbsp;[![UBUNTU](https://img.shields.io/badge/ubuntu-v18.0-orange)](https://releases.ubuntu.com/impish/)&nbsp;&nbsp;[![AUR]&nbsp;&nbsp;[![SOURCE](https://img.shields.io/badge/license-MIT-green)](https://github.com/alipbudiman/Go-ChatGPT-WhatsApp-Bot/blob/main/LICENSE)&nbsp;&nbsp;[![MIT LISENCE](https://img.shields.io/badge/sponsors-WhatsApp-brightgreen)](https://wa.me/6282113791904)
 
 WhatsApp MultiDevice ChatGPT Bot client API Example using Go Programming Language.
 
