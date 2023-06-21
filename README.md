@@ -43,7 +43,6 @@ go env -w GO111MODULE=off
 # Run
 
 ```
-go env -w GO111MODULE=off
 $ go build main.go
 $ ./main.go
 ```
@@ -51,7 +50,6 @@ $ ./main.go
 or
 
 ```
-go env -w GO111MODULE=off
 $ go run main.go
 ```
 
