@@ -20,7 +20,8 @@ The Example of usage [Whatsmeow WhatsApp API](https://github.com/tulir/whatsmeow
 
 # Add OpenAI Api-key
 
-https://github.com/alipbudiman/Go-ChatGPT-WhatsApp-Bot/blob/b3792b2a0a7eebb4b3fe841d906ab094771bdecc/main.go#LL37C1-L38C27
+#ADD API-KEY
+https://github.com/alipbudiman/Go-ChatGPT-WhatsApp-Bot/blob/aaf2f485ae31f2a44a8786c9ca869ab4e4ecf900/main.go#L37-L38
 
 To get open AI api-key, you can visit open ai platform. [Click here](https://platform.openai.com/account/api-keys)
 
