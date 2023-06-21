@@ -37,7 +37,7 @@ To get open AI api-key, you cah visit open ai platform. [Click here](https://pla
 # Turn off go module
 
 ```
-go env -w GO111MODULE=off
+$ go env -w GO111MODULE=off
 ```
 
 # Run
