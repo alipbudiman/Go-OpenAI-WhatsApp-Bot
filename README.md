@@ -32,7 +32,7 @@ var (
 )
 ```
 
-To get open AI api-key, you cah visit open ai platform. [Click here](https://platform.openai.com/account/api-keys)
+To get open AI api-key, you can visit open ai platform. [Click here](https://platform.openai.com/account/api-keys)
 
 # Turn off go module
 
