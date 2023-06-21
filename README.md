@@ -18,19 +18,9 @@ The Example of usage [Whatsmeow WhatsApp API](https://github.com/tulir/whatsmeow
 
 - [FFmpeg](https://ffmpeg.org/)
 
-# Add OPEN AI Token
+# Add OpenAI Api-key
 
-```go
-var (
-	Log           *logrus.Logger
-	Client        *ClientWrapper
-	myJID         types.JID
-    //---------here----------------
-	ChatGPTApikey string = "" // << INSERT YOUR OPEN AI API HERE
-    //---------here----------------
-	ChatGPTProxy  string = ""
-)
-```
+https://github.com/alipbudiman/Go-ChatGPT-WhatsApp-Bot/blob/b3792b2a0a7eebb4b3fe841d906ab094771bdecc/main.go#LL37C1-L38C27
 
 To get open AI api-key, you can visit open ai platform. [Click here](https://platform.openai.com/account/api-keys)
 
