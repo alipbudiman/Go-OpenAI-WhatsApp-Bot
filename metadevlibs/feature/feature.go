@@ -54,9 +54,6 @@ func transporter(req *http.Request, proxyURL string) (*http.Response, error) {
 }
 
 func GPTConfig(Model string, Api string, Proxy string) {
-	if Api == "<YOUR OPENAI APIKEY>" {
-		apikey = ""
-	}
 	model = model
 	proxy = proxy
 	apikey = Api
