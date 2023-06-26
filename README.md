@@ -32,7 +32,7 @@ The Example of usage [Whatsmeow WhatsApp API](https://github.com/tulir/whatsmeow
 
 Add OpeinAI Api-key for access Chat GPT feature (if not fill, bot still running) and Proxy for Chat GPT feature (optional) 
 
-https://github.com/alipbudiman/Go-ChatGPT-WhatsApp-Bot/blob/aaf2f485ae31f2a44a8786c9ca869ab4e4ecf900/main.go#L37-L38
+[https://github.com/alipbudiman/Go-ChatGPT-WhatsApp-Bot/blob/aaf2f485ae31f2a44a8786c9ca869ab4e4ecf900/main.go#L37-L38](https://github.com/alipbudiman/Go-OpenAI-WhatsApp-Bot/blob/12302a2b4c6fa8bb376f10f69c0c85171aa1f44d/main.go#L39-L40)
 
 
 To get open AI api-key, you can visit open ai platform. [Click here](https://platform.openai.com/account/api-keys)
