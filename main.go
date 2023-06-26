@@ -17,6 +17,8 @@ import (
 	"./metadevlibs/botlib"
 	"./metadevlibs/feature"
 	"./metadevlibs/helper"
+	"./metadevlibs/object"
+	"./metadevlibs/transport"
 	"go.mau.fi/whatsmeow"
 	"go.mau.fi/whatsmeow/store"
 	"go.mau.fi/whatsmeow/store/sqlstore"
@@ -102,6 +104,29 @@ func (cl *ClientWrapper) MessageHandler(evt interface{}) {
 			buildConvertation += fmt.Sprintf("\nTotal convertation: %d", (len(feature.GPTMap[sender])-1)/2)
 			cl.SendMention(to, buildConvertation, []string{senderSTR})
 
+		} else if strings.HasPrefix(txt, "dalle draw: ") {
+			cl.SendTextMessage(to, "Process . . .")
+			prompt := txtV2[len("dalle draw: "):]
+			imgLoad := 3           // Total of DAll-E load image (max 10)
+			imgSize := "1024x1024" // Generated images can have a size of "256x256", "512x512", or "1024x1024 "pixels
+			responDallE, err := feature.DallE(prompt, imgLoad, imgSize)
+			if err != nil {
+				cl.SendTextMessage(to, "Error please check console for detail")
+				panic(err)
+			}
+			for i, img := range responDallE {
+				fileName := object.GenerateFileName(".jpg")
+				data, err := transport.Download(img, "tmp/img", fileName)
+				if err != nil {
+					cl.SendTextMessage(to, fmt.Sprintf("Error Fail load image %d, please check console for detail", i+1))
+					fmt.Sprintf(err.Error())
+					continue
+				}
+				msg := fmt.Sprintf("Total Generate image: %d / %d", imgLoad, i+1)
+				msg += fmt.Sprintf("\nTotal word in promp: %d", len(strings.Fields(prompt)))
+				cl.SendImageMessage(to, data, msg)
+				os.Remove(data)
+			}
 		}
 
 		if !from_dm {

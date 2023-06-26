@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"strings"
 
+	tt "../transport"
 	"github.com/tidwall/gjson"
 	"go.mau.fi/whatsmeow/types"
 )
@@ -25,32 +25,6 @@ type GptConfig struct {
 	api  string
 	prox string
 	mod  string
-}
-
-func transporter(req *http.Request, proxyURL string) (*http.Response, error) {
-	var transport *http.Transport
-	if proxyURL != "" {
-		proxy, err := url.Parse(proxyURL)
-		if err != nil {
-			fmt.Println(err.Error())
-			return nil, err
-		}
-		transport = &http.Transport{
-			Proxy: http.ProxyURL(proxy),
-		}
-		client := &http.Client{Transport: transport}
-		res, err := client.Do(req)
-		if err != nil {
-			return nil, err
-		}
-		return res, nil
-	} else {
-		res, err := http.DefaultClient.Do(req)
-		if err != nil {
-			return nil, err
-		}
-		return res, nil
-	}
 }
 
 func GPTConfig(Model string, Api string, Proxy string) {
@@ -112,7 +86,7 @@ func ChatGPT(sender types.JID, user_chat string) (string, error) {
 	request, err := http.NewRequest("POST", "https://api.openai.com/v1/chat/completions", payload)
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Authorization", "Bearer "+apikey)
-	response, err := transporter(request, proxy)
+	response, err := tt.Transporter(request, proxy)
 	if err != nil {
 		return "", err
 	}
@@ -131,5 +105,50 @@ func ChatGPT(sender types.JID, user_chat string) (string, error) {
 		return res, nil
 	} else {
 		return "", errors.New("fail to get response Chat GPT Turbo!")
+	}
+}
+
+func DallE(prompt string, imageLoad int, size string) ([]string, error) {
+	if apikey == "" {
+		return nil, errors.New("please input OpenAI Apikey, get apikey here https://platform.openai.com/account/api-keys")
+	}
+	requestBody, err := json.Marshal(map[string]interface{}{
+		"prompt": prompt,
+		"n":      imageLoad,
+		"size":   size,
+	})
+	if err != nil {
+		return nil, err
+	}
+	var payload = bytes.NewBuffer(requestBody)
+	request, err := http.NewRequest("POST", "https://api.openai.com/v1/images/generations", payload)
+	if err != nil {
+		return nil, err
+	}
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Authorization", "Bearer "+apikey)
+	response, err := tt.Transporter(request, proxy)
+	if err != nil {
+		return nil, err
+	} else {
+		defer response.Body.Close()
+		body, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			return nil, err
+		}
+		rejected := gjson.Get(string(body), "error.message").String()
+		if rejected != "" {
+			return nil, errors.New(strings.ToLower(rejected))
+		}
+		created := gjson.Get(string(body), "created").String()
+		if created == "" {
+			return nil, errors.New("oops.. something when wrong!")
+		}
+		result := gjson.Get(string(body), "data.#.url")
+		var imgData []string
+		for _, url := range result.Array() {
+			imgData = append(imgData, url.String())
+		}
+		return imgData, nil
 	}
 }
