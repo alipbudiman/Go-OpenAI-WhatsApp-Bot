@@ -28,7 +28,7 @@ The Example of usage [Whatsmeow WhatsApp API](https://github.com/tulir/whatsmeow
 
 - [FFmpeg](https://ffmpeg.org/)
 
-# Add OPEN AI Token
+# Add OpenAI Api-key or Proxy
 
 Add OpeinAI Api-key for access Chat GPT feature (if not fill, bot still running) and Proxy for Chat GPT feature (optional) 
 
