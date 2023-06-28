@@ -7,8 +7,11 @@ WhatsApp MultiDevice Bot client API Example using Go Programming Language and Op
 The Example of usage [Whatsmeow WhatsApp API](https://github.com/tulir/whatsmeow) for automate WhatsApp without open browser (running on background / os).
 
 # Support:
-- ChatGPT
-- DallE AI 
+- Support recive command from dm or group
+- ChatGPT feature (Support convertation)
+- DallE AI feature
+- Send Message (text, image, video) [for other media WIT...]
+- Tagall member groups
 
 # Chat GPT
 
