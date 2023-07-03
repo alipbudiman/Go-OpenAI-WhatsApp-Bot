@@ -23,7 +23,7 @@ The Example of usage [Whatsmeow WhatsApp API](https://github.com/tulir/whatsmeow
 
 # Usable bots for (Example and Inspiration)
 
-*COMING SOON*
+- [Wa Nexus](https://wa-nexus.web.app/)
 
 # Requirement
 
