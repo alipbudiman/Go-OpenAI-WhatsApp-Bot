@@ -12,6 +12,9 @@ The Example of usage [Whatsmeow WhatsApp API](https://github.com/tulir/whatsmeow
 - DallE AI feature
 - Send Message (text, image, video) [for other media WIT...]
 - Tagall member groups
+- Reader check
+- Anti Unsend
+- Make sticker
 
 # Chat GPT
 
@@ -31,11 +34,16 @@ Free invite & use Whatsapp bot [Wa Nexus](https://wa-nexus.web.app/)
 
 - [FFmpeg](https://ffmpeg.org/)
 
+- [Webp](/assets/doc/webp.md)
+
 # Add OpenAI Api-key or Proxy
 
 Add OpeinAI Api-key for access Chat GPT feature (if not fill, bot still running) and Proxy for Chat GPT feature (optional) 
 
-[Add Api-key here](https://github.com/alipbudiman/Go-OpenAI-WhatsApp-Bot/blob/12302a2b4c6fa8bb376f10f69c0c85171aa1f44d/main.go#L39-L40)
+```go
+	ChatGPTApikey     string = "" // << your apikey here
+	ChatGPTProxy      string = "" 
+```
 
 
 To get open AI api-key, you can visit open ai platform. [Click here](https://platform.openai.com/account/api-keys)

@@ -3,6 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
+	"mime"
+	"net/http"
 	"os"
 	"os/signal"
 	"reflect"
@@ -19,12 +22,15 @@ import (
 	"./metadevlibs/helper"
 	"./metadevlibs/object"
 	"./metadevlibs/transport"
+	"github.com/tidwall/gjson"
 	"go.mau.fi/whatsmeow"
 	"go.mau.fi/whatsmeow/store"
 	"go.mau.fi/whatsmeow/store/sqlstore"
 	"go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
+	"google.golang.org/protobuf/proto"
 
+	waProto "go.mau.fi/whatsmeow/binary/proto"
 	waLog "go.mau.fi/whatsmeow/util/log"
 )
 
@@ -33,11 +39,19 @@ type ClientWrapper struct {
 }
 
 var (
-	Log           *logrus.Logger
-	Client        *ClientWrapper
-	myJID         types.JID
-	ChatGPTApikey string = "" // << INSERT YOUR OPEN AI API HERE
-	ChatGPTProxy  string = ""
+	Log               *logrus.Logger
+	Client            *ClientWrapper
+	myJID             types.JID
+	ChatGPTApikey     string = "" // << your apikey here
+	ChatGPTProxy      string = "" 
+	checkRead                = make(map[string]int)
+	readerTemp               = make(map[string][]string)
+	antiUnsend               = make(map[types.JID][]string)
+	antiUnsend_img           = make(map[string]*waProto.ImageMessage)
+	antiUnsend_vid           = make(map[string]*waProto.VideoMessage)
+	antiUnsend_aud           = make(map[string]*waProto.AudioMessage)
+	UnsendRead               = make(map[string]int)
+	StkConv                  = make(map[string]int)
 )
 
 func (cl *ClientWrapper) MessageHandler(evt interface{}) {
@@ -71,6 +85,39 @@ func (cl *ClientWrapper) MessageHandler(evt interface{}) {
 		if to == sender {
 			from_dm = true
 		}
+
+		go func() {
+			if StkConv[fmt.Sprintf("%v", to)] == 1 {
+				img := v.Message.GetImageMessage()
+				if img != nil {
+					StkConv[fmt.Sprintf("%v", to)] = 0
+					data, err := cl.Client.Download(img)
+					if err != nil {
+						cl.SendTextMessage(to, err.Error())
+						return
+					}
+					exts, _ := mime.ExtensionsByType(img.GetMimetype())
+					path := fmt.Sprintf("%s%s", v.Info.ID, exts[0])
+					err = os.WriteFile(path, data, 0600)
+					if err != nil {
+						cl.SendTextMessage(to, err.Error())
+						return
+					}
+					fmt.Println("Saved image in message to", path)
+					webp_success, webp_path := helper.ConvertJPEtoWEBP(path)
+					if webp_success {
+						cl.SendMention(to, "👾 success create sticker "+helper.MentionFormat(fmt.Sprintf("%v", sender)), []string{fmt.Sprintf("%v", sender)})
+						cl.SendStickerMessage(to, webp_path, false)
+					} else {
+						cl.SendMention(to, "👾 fail create sticker "+helper.MentionFormat(fmt.Sprintf("%v", sender)), []string{fmt.Sprintf("%v", sender)})
+					}
+					os.Remove(path)
+					os.Remove(webp_path)
+				}
+			}
+
+		}()
+		go cl.TrackUnsendMessage(to, v, txtV2, sender.String())
 		if txt == "ping" {
 			cl.SendTextMessage(to, "Pong!")
 		} else if txt == "help" {
@@ -127,6 +174,12 @@ func (cl *ClientWrapper) MessageHandler(evt interface{}) {
 				cl.SendImageMessage(to, data, msg)
 				os.Remove(data)
 			}
+		} else if strings.HasPrefix(txt, "make sticker") {
+			go func() {
+				group_id := fmt.Sprintf("%v", to)
+				StkConv[group_id] = 1
+				cl.SendTextMessage(to, "👾 [Sticker] Please send image")
+			}()
 		}
 
 		if !from_dm {
@@ -140,16 +193,173 @@ func (cl *ClientWrapper) MessageHandler(evt interface{}) {
 				}
 				ret += fmt.Sprintf("\n\nTotal %v user", len(mem))
 				cl.SendMention(to, ret, mem)
-
 			} else if strings.HasPrefix(txt, "say: ") {
 				msg := txtV2[len("say: "):]
 				cl.SendTextMessage(to, msg)
+			} else if strings.HasPrefix(txt, "reader ") {
+				spl := strings.Replace(txt, "reader ", "", 1)
+				if spl == "on" {
+					readerTemp[to.String()] = []string{}
+					checkRead[to.String()] = 1
+					cl.SendTextMessage(to, "👾Reader enabled")
+				} else if spl == "off" {
+					readerTemp[to.String()] = []string{}
+					checkRead[to.String()] = 0
+					cl.SendTextMessage(to, "👾Reader disable")
+				} else {
+					cl.SendTextMessage(to, "👾 For Active Reader type `reader on`, Turn off type `reader off`")
+				}
+			} else if strings.HasPrefix(txt, "anti unsend ") {
+				spl := strings.Replace(txt, "anti unsend ", "", 1)
+				g := fmt.Sprintf("%v", to)
+				if spl == "on" {
+					UnsendRead[g] = 1
+					cl.SendTextMessage(to, "👾 Anti unsend enabled")
+				} else if spl == "off" {
+					UnsendRead[g] = 0
+					cl.SendTextMessage(to, "👾 Anti unsend disable")
+				} else {
+					cl.SendTextMessage(to, "👾 For Active Anti Unsend, type `anti unsend on`, Turn off type `anti unsend off`")
+				}
 			}
 		}
 		return
+	case *events.Receipt:
+		go cl.ProcessReader(v)
 	default:
 		fmt.Println(reflect.TypeOf(v))
 		fmt.Println(v)
+	}
+}
+
+func (cl *ClientWrapper) ProcessReader(evt *events.Receipt) {
+	param1 := fmt.Sprintf("%v", evt.Chat)
+	if checkRead[param1] == 1 {
+		if strings.Contains(evt.Type.GoString(), "events.ReceiptTypeRead") {
+			go func() {
+				param2 := fmt.Sprintf("%v", evt.Sender)
+				if !helper.InArray(readerTemp[param1], param2) && evt.Sender.String() != myJID.String() {
+					readerTemp[param1] = append(readerTemp[param1], param2)
+					jid, param := helper.ParseJIDUser(param1)
+					if param {
+						XSiderMsg := "👾 Hello i see you " + helper.MentionFormat(param2)
+						cl.SendMention(jid, XSiderMsg, []string{param2})
+					}
+				}
+			}()
+
+		}
+	}
+}
+
+func (cli *ClientWrapper) TrackUnsendMessage(to types.JID, v *events.Message, text string, sender string) {
+	if UnsendRead[fmt.Sprintf("%v", to)] == 1 {
+		if strings.Contains(fmt.Sprintf("%v", v), "protocolMessage:{key:{remoteJid:") {
+			if strings.Contains(fmt.Sprintf("%v", v), "type:REVOKE") {
+				uns_id := v.Message.ProtocolMessage.Key.GetId()
+				if uns_id != "" {
+					for _, umsg := range antiUnsend[to] {
+						Sumsg := strings.Split(umsg, "∬∬∬")
+						if Sumsg[0] == uns_id {
+							switch {
+							case Sumsg[2] == "text":
+								cli.SendMention(to, fmt.Sprintf("*User Delete Message*\nType: Text\n%s\nMessage:\n%s", helper.MentionFormat(sender), Sumsg[1]), []string{sender})
+								antiUnsend[to] = helper.Remove(antiUnsend[to], umsg)
+							case Sumsg[2] == "img":
+								snd := fmt.Sprintf("%v", sender)
+								img := antiUnsend_img[uns_id]
+								data, err := cli.Client.Download(img)
+								if err != nil {
+									cli.SendMention(to, "Fail to restore message "+helper.MentionFormat(snd), []string{snd})
+									antiUnsend[to] = helper.Remove(antiUnsend[to], umsg)
+									delete(antiUnsend_img, uns_id)
+									return
+								}
+								exts, _ := mime.ExtensionsByType(img.GetMimetype())
+								path := fmt.Sprintf("%s%s", v.Info.ID, exts[0])
+								defer os.Remove(path)
+								err = os.WriteFile(path, data, 0600)
+								Cvpath, errCv := helper.ConvertJPEtoJPG(path)
+								defer os.Remove(Cvpath)
+								if errCv != nil {
+									cli.SendTextMessage(to, errCv.Error())
+									return
+								}
+								if err != nil {
+									cli.SendMention(to, "Fail to restore message "+helper.MentionFormat(snd), []string{snd})
+									antiUnsend[to] = helper.Remove(antiUnsend[to], umsg)
+									delete(antiUnsend_img, uns_id)
+									return
+								}
+								cm := fmt.Sprintf("*User Delete Message*\nType: Image\n%s\nMessage:\n%s", helper.MentionFormat(sender), Sumsg[1])
+								cli.SendImageMessage(to, Cvpath, cm)
+								antiUnsend[to] = helper.Remove(antiUnsend[to], umsg)
+								delete(antiUnsend_img, uns_id)
+							case Sumsg[2] == "vid":
+								snd := fmt.Sprintf("%v", sender)
+								vid := antiUnsend_vid[uns_id]
+								data, err := cli.Client.Download(vid)
+								if err != nil {
+									cli.SendMention(to, "Fail to restore message "+helper.MentionFormat(snd), []string{snd})
+									antiUnsend[to] = helper.Remove(antiUnsend[to], umsg)
+									delete(antiUnsend_vid, uns_id)
+									return
+								}
+								exts, _ := mime.ExtensionsByType(vid.GetMimetype())
+								path := fmt.Sprintf("%s%s", v.Info.ID, exts[0])
+								defer os.Remove(path)
+								err = os.WriteFile(path, data, 0600)
+								if err != nil {
+									cli.SendMention(to, "Fail to restore message "+helper.MentionFormat(snd), []string{snd})
+									antiUnsend[to] = helper.Remove(antiUnsend[to], umsg)
+									delete(antiUnsend_vid, uns_id)
+								}
+								AddName := helper.RandomStrings(7)
+								newName := strings.ReplaceAll(path, ".f4v", AddName+".mp4")
+								newPath, err := helper.ConvertF4VtoMP4(path, newName)
+								defer os.Remove(newPath)
+								if err != nil {
+									cli.SendMention(to, "Fail to restore message "+helper.MentionFormat(snd), []string{snd})
+									antiUnsend[to] = helper.Remove(antiUnsend[to], umsg)
+									delete(antiUnsend_vid, uns_id)
+								}
+								cm := fmt.Sprintf("*User Delete Message*\nType: Video\n%s\nMessage:\n%s", helper.MentionFormat(sender), Sumsg[1])
+								cli.SendVideoMessage(to, newPath, cm)
+								antiUnsend[to] = helper.Remove(antiUnsend[to], umsg)
+								delete(antiUnsend_vid, uns_id)
+							}
+							return
+						}
+					}
+				}
+			}
+
+		}
+		if len(antiUnsend[to]) >= 100 {
+			antiUnsend[to] = helper.Remove(antiUnsend[to], (antiUnsend[to])[0])
+			uns := strings.Split((antiUnsend[to])[0], "∬∬∬")[0]
+			delete(antiUnsend_img, uns)
+			delete(antiUnsend_vid, uns)
+		}
+		img := v.Message.GetImageMessage()
+		vid := v.Message.GetVideoMessage()
+		aud := v.Message.GetAudioMessage()
+		if img != nil {
+			img_caption := v.Message.ImageMessage.GetCaption()
+			antiUnsend_img[v.Info.ID] = img
+			antiUnsend[to] = append(antiUnsend[to], fmt.Sprintf("%s∬∬∬%s∬∬∬img", v.Info.ID, img_caption))
+			return
+		} else if vid != nil {
+			vid_caption := v.Message.VideoMessage.GetCaption()
+			antiUnsend_vid[v.Info.ID] = vid
+			antiUnsend[to] = append(antiUnsend[to], fmt.Sprintf("%s∬∬∬%s∬∬∬vid", v.Info.ID, vid_caption))
+			return
+		} else if aud != nil {
+			antiUnsend_aud[v.Info.ID] = aud
+			antiUnsend[to] = append(antiUnsend[to], fmt.Sprintf("%s∬∬∬None∬∬∬aud", v.Info.ID))
+			return
+		}
+		antiUnsend[to] = append(antiUnsend[to], fmt.Sprintf("%s∬∬∬%s∬∬∬text", v.Info.ID, text))
 	}
 }
 
@@ -163,6 +373,7 @@ func (cl *ClientWrapper) newClient(d *store.Device, l waLog.Logger) {
 
 func main() {
 	feature.GPTConfig("", ChatGPTApikey, ChatGPTProxy)
+	store.DeviceProps.RequireFullSync = proto.Bool(false)
 	dbLog := waLog.Stdout("Database", "DEBUG", true)
 	container, err := sqlstore.New("sqlite3", "file:commander.db?_foreign_keys=on", dbLog)
 	if err != nil {

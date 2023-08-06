@@ -1,10 +1,18 @@
 package helper
 
 import (
+	"errors"
 	"fmt"
+	"image/jpeg"
+	"math/rand"
+	"os"
+	"os/exec"
 	"reflect"
 	"strings"
+	"time"
 
+	"github.com/kolesa-team/go-webp/encoder"
+	"github.com/kolesa-team/go-webp/webp"
 	"go.mau.fi/whatsmeow/types"
 )
 
@@ -24,8 +32,42 @@ func WriteDisplayMenu(from_dm bool) string {
 	if !from_dm {
 		h += "\n⊶ say: `query`"
 		h += "\n⊶ tag all"
+		h += "\n⊶ reader <on/off>"
+		h += "\n⊶ anti unsend <on/off>"
 	}
 	return h
+}
+
+func ConvertJPEtoWEBP(path string) (bool, string) {
+	file, err := os.Open(path)
+	if err != nil {
+		return false, "none"
+	}
+	defer file.Close()
+
+	img, err := jpeg.Decode(file)
+	if err != nil {
+		return false, "none"
+	}
+
+	options, err := encoder.NewLossyEncoderOptions(encoder.PresetPhoto, 90)
+	if err != nil {
+		return false, "none"
+	}
+	new_path := strings.ReplaceAll(path, ".jpe", ".webp")
+	// Create a file object that implements io.Writer
+	outputFile, err := os.Create(new_path)
+	if err != nil {
+		return false, "none"
+	}
+	defer outputFile.Close()
+
+	// Pass the file object as the first argument to webp.Encode
+	err = webp.Encode(outputFile, img, options)
+	if err != nil {
+		return false, "none"
+	}
+	return true, new_path
 }
 
 func SenderJIDConvert(jid types.JID) (types.JID, bool) {
@@ -33,7 +75,7 @@ func SenderJIDConvert(jid types.JID) (types.JID, bool) {
 	x := strings.Split(j, "@")
 	y := strings.Split(x[0], ".")
 	z := y[0] + "@" + x[1]
-	jid, ok := parseJID(z)
+	jid, ok := ParseJIDUser(z)
 	if !ok {
 		return jid, false
 	}
@@ -41,14 +83,14 @@ func SenderJIDConvert(jid types.JID) (types.JID, bool) {
 }
 
 func ConvertJID(args string) (types.JID, bool) {
-	jid, ok := parseJID(args)
+	jid, ok := ParseJIDUser(args)
 	if ok {
 		return jid, true
 	}
 	return jid, false
 }
 
-func parseJID(arg string) (types.JID, bool) {
+func ParseJIDUser(arg string) (types.JID, bool) {
 	if arg[0] == '+' {
 		arg = arg[1:]
 	}
@@ -107,4 +149,76 @@ func LooperMessage(message string, cut_after int) []string {
 		response = append(response, message)
 	}
 	return response
+}
+
+func InArray[T any](s []T, r T) bool {
+	for _, x := range s {
+		if reflect.DeepEqual(x, r) {
+			return true
+		}
+	}
+	return false
+}
+
+func RandomStrings(length int) string {
+	rand.Seed(time.Now().UnixNano()) // Inisialisasi nilai seed
+	var letterBytes string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = letterBytes[rand.Intn(len(letterBytes))] // Pilih karakter acak dari letterBytes
+	}
+	randomString := string(b)
+
+	return randomString
+}
+
+func ConvertJPEtoJPG(path string) (string, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		fmt.Println(err)
+		return "", err
+	}
+	defer file.Close()
+	img, err := jpeg.Decode(file)
+	if err != nil {
+		fmt.Println(err)
+		return "", err
+	}
+	newFileName := strings.ReplaceAll(path, ".jpe", ".jpg")
+	newfile, err := os.Create(newFileName)
+	if err != nil {
+		fmt.Println(err)
+		return "", err
+	}
+	defer newfile.Close()
+	err = jpeg.Encode(newfile, img, &jpeg.Options{Quality: 90})
+	if err != nil {
+		fmt.Println(err)
+		return "", err
+	}
+
+	return newFileName, nil
+}
+
+func ConvertF4VtoMP4(inputFile string, outputFile string) (string, error) {
+	ch := make(chan bool)
+	exec.Command("ffmpeg", "-i", inputFile, outputFile).Run()
+	go TrackFileTimeOut(10, outputFile, ch)
+	isExist := <-ch
+	if isExist {
+		return outputFile, nil
+	}
+	return "", errors.New("error, Fail to convert F4v to MP4")
+
+}
+
+func TrackFileTimeOut(time_in_second int, path string, result chan<- bool) {
+	for i := 1; i < time_in_second; i++ {
+		time.Sleep(1 * time.Second)
+		if _, err := os.Stat(path); os.IsNotExist(err) {
+			result <- true
+			break
+		}
+	}
+	result <- false
 }

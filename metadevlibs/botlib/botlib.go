@@ -179,6 +179,34 @@ func (cl *CLIENT) SendMention(jid types.JID, text string, mentionList []string) 
 	cl.Client.SendMessage(context.Background(), jid, msg)
 }
 
+func (cli *CLIENT) SendStickerMessage(jid types.JID, path string, animated bool) (bool, error) {
+	data, err1 := ioutil.ReadFile(path)
+	if err1 != nil {
+		fmt.Printf("Failed to read %s: %v", path, err1)
+		return false, err1
+	}
+	uploaded, err2 := cli.Client.Upload(context.Background(), data, whatsmeow.MediaImage)
+	if err2 != nil {
+		fmt.Printf("Failed to upload file: %v", err2)
+		return false, err2
+	}
+	msg := &waProto.Message{StickerMessage: &waProto.StickerMessage{
+		Url:           proto.String(uploaded.URL),
+		DirectPath:    proto.String(uploaded.DirectPath),
+		MediaKey:      uploaded.MediaKey,
+		Mimetype:      proto.String(http.DetectContentType(data)),
+		FileEncSha256: uploaded.FileEncSHA256,
+		FileSha256:    uploaded.FileSHA256,
+		FileLength:    proto.Uint64(uint64(len(data))),
+		IsAnimated:    proto.Bool(animated),
+	}}
+	_, err3 := cli.Client.SendMessage(context.Background(), jid, msg)
+	if err3 != nil {
+		return false, err3
+	}
+	return true, nil
+}
+
 func (cl *CLIENT) GetGroup(jid types.JID) *types.GroupInfo {
 	data, _ := cl.Client.GetGroupInfo(jid)
 	return data
