@@ -88,10 +88,10 @@ func ParseJIDUser(arg string) (types.JID, bool) {
 	} else {
 		recipient, err := types.ParseJID(arg)
 		if err != nil {
-			fmt.Println("Fail JID %s: %v", arg, err)
+			fmt.Printf("Fail JID %s: %v", arg, err)
 			return recipient, false
 		} else if recipient.User == "" {
-			fmt.Println("Fail JID %s: no specified", arg)
+			fmt.Printf("Fail JID %s: no specified", arg)
 			return recipient, false
 		}
 		return recipient, true
