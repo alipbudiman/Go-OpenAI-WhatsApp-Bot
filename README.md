@@ -41,7 +41,6 @@ Free invite & use Whatsapp bot [Wa Nexus](https://wa-nexus.web.app/)
 
 - [FFmpeg](https://ffmpeg.org/)
 
-- [Webp](/assets/doc/webp.md)
 
 # Add OpenAI Api-key or Proxy
 
