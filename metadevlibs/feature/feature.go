@@ -9,28 +9,23 @@ import (
 	"net/http"
 	"strings"
 
-	tt "../transport"
+	tt "gowagpt/metadevlibs/transport"
+
 	"github.com/tidwall/gjson"
 	"go.mau.fi/whatsmeow/types"
 )
 
 var (
 	GPTMap        = make(map[types.JID][]map[string]string)
-	apikey string = ""
-	proxy  string = ""
-	model  string = "gpt-3.5-turbo"
+	Apikey string = ""
+	Proxy  string = ""
+	Model  string = "gpt-3.5-turbo"
 )
 
-type GptConfig struct {
-	api  string
-	prox string
-	mod  string
-}
-
-func GPTConfig(Model string, Api string, Proxy string) {
-	model = model
-	proxy = proxy
-	apikey = Api
+func GPTConfig(model string, api string, proxy string) {
+	Model = model
+	Proxy = proxy
+	Apikey = api
 }
 
 func ChatGPTReset(sender types.JID) bool {
@@ -52,7 +47,7 @@ func ChatGPTHistory(sender types.JID) string {
 }
 
 func ChatGPT(sender types.JID, user_chat string) (string, error) {
-	if apikey == "" {
+	if Apikey == "" {
 		return "Please input OpenAI Apikey, get apikey here https://platform.openai.com/account/api-keys", nil
 	}
 	if len(GPTMap[sender]) < 1 {
@@ -75,7 +70,7 @@ func ChatGPT(sender types.JID, user_chat string) (string, error) {
 		GPTMap[sender] = append(GPTMap[sender], newMap)
 	}
 	requestBody, err := json.Marshal(map[string]interface{}{
-		"model":    model,
+		"model":    Model,
 		"messages": GPTMap[sender],
 	})
 
@@ -84,9 +79,12 @@ func ChatGPT(sender types.JID, user_chat string) (string, error) {
 	}
 	var payload = bytes.NewBuffer(requestBody)
 	request, err := http.NewRequest("POST", "https://api.openai.com/v1/chat/completions", payload)
+	if err != nil {
+		return "", err
+	}
 	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("Authorization", "Bearer "+apikey)
-	response, err := tt.Transporter(request, proxy)
+	request.Header.Set("Authorization", "Bearer "+Apikey)
+	response, err := tt.Transporter(request, Proxy)
 	if err != nil {
 		return "", err
 	}
@@ -104,12 +102,12 @@ func ChatGPT(sender types.JID, user_chat string) (string, error) {
 		GPTMap[sender] = append(GPTMap[sender], newMap)
 		return res, nil
 	} else {
-		return "", errors.New("fail to get response Chat GPT Turbo!")
+		return "", errors.New("fail to get response Chat GPT Turbo")
 	}
 }
 
 func DallE(prompt string, imageLoad int, size string) ([]string, error) {
-	if apikey == "" {
+	if Apikey == "" {
 		return nil, errors.New("please input OpenAI Apikey, get apikey here https://platform.openai.com/account/api-keys")
 	}
 	requestBody, err := json.Marshal(map[string]interface{}{
@@ -126,8 +124,8 @@ func DallE(prompt string, imageLoad int, size string) ([]string, error) {
 		return nil, err
 	}
 	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("Authorization", "Bearer "+apikey)
-	response, err := tt.Transporter(request, proxy)
+	request.Header.Set("Authorization", "Bearer "+Apikey)
+	response, err := tt.Transporter(request, Proxy)
 	if err != nil {
 		return nil, err
 	} else {

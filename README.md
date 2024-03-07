@@ -48,11 +48,12 @@ Add OpeinAI Api-key for access Chat GPT feature (if not fill, bot still running)
 
 To get open AI api-key, you can visit open ai platform. [Click here](https://platform.openai.com/account/api-keys)
 
-# Turn off go module
+<!-- # Turn off go module
+<!-- no needed now -->
 
 ```
 $ go env -w GO111MODULE=off
-```
+``` -->
 
 # Run
 

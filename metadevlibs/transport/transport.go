@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	obj "../object"
+	obj "gowagpt/metadevlibs/object"
 )
 
 func Transporter(req *http.Request, proxyURL string) (*http.Response, error) {
