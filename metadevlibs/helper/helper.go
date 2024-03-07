@@ -11,8 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kolesa-team/go-webp/encoder"
-	"github.com/kolesa-team/go-webp/webp"
+	"github.com/nickalie/go-webpbin"
 	"go.mau.fi/whatsmeow/types"
 )
 
@@ -48,41 +47,22 @@ func FileExists(filepath string) bool {
 }
 
 func ConvertJPEtoWEBP(path string) (bool, string) {
-	file, err := os.Open(path)
-	if err != nil {
-		return false, "none"
-	}
-	defer file.Close()
+		webp_path := strings.Split(path, ".jpe")[0]+".webp"
+		cmd := webpbin.NewCWebP().
+		Quality(70).
+		InputFile(path).
+		OutputFile(webp_path)
 
-	img, err := jpeg.Decode(file)
-	if err != nil {
-		return false, "none"
+	if err := cmd.Run(); err != nil {
+		return false, path
 	}
-
-	options, err := encoder.NewLossyEncoderOptions(encoder.PresetPhoto, 90)
-	if err != nil {
-		return false, "none"
-	}
-	new_path := strings.ReplaceAll(path, ".jpe", ".webp")
-	// Create a file object that implements io.Writer
-	outputFile, err := os.Create(new_path)
-	if err != nil {
-		return false, "none"
-	}
-	defer outputFile.Close()
-
-	// Pass the file object as the first argument to webp.Encode
-	err = webp.Encode(outputFile, img, options)
-	if err != nil {
-		return false, "none"
-	}
-	return true, new_path
+	return true, webp_path
 }
 
 func SenderJIDConvert(jid types.JID) (types.JID, bool) {
 	j := fmt.Sprintf("%v", jid)
 	x := strings.Split(j, "@")
-	y := strings.Split(x[0], ".")
+	y := strings.Split(x[0], ".") 
 	z := y[0] + "@" + x[1]
 	jid, ok := ParseJIDUser(z)
 	if !ok {

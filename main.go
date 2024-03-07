@@ -164,7 +164,7 @@ func (cl *ClientWrapper) MessageHandler(evt interface{}) {
 				data, err := transport.Download(img, "tmp/img", fileName)
 				if err != nil {
 					cl.SendTextMessage(to, fmt.Sprintf("Error Fail load image %d, please check console for detail", i+1))
-					fmt.Sprintf(err.Error())
+					fmt.Println(err.Error())
 					continue
 				}
 				msg := fmt.Sprintf("Total Generate image: %d / %d", imgLoad, i+1)
@@ -180,7 +180,6 @@ func (cl *ClientWrapper) MessageHandler(evt interface{}) {
 			cl.SendTextMessage(to, "Process . . .")
 			message := txtV2[len("group broadcast: "):]
 			cl.SendMessageToAllGroup(to, message)
-		} else if strings.HasPrefix(txt, "hello world") {
 			hello_wolrd := []string{
 				"Hello, world",
 				"Programmed to work and not to feel",
@@ -395,7 +394,10 @@ func main() {
 	feature.GPTConfig("", ChatGPTApikey, ChatGPTProxy)
 	store.DeviceProps.RequireFullSync = proto.Bool(false)
 	dbLog := waLog.Stdout("Database", "DEBUG", true)
-	container, err := sqlstore.New("sqlite3", "file:commander.db?_foreign_keys=on", dbLog)
+	if _, err := os.Stat("db/sql"); os.IsNotExist(err) {
+		os.MkdirAll("db/sql", 0755)
+	}
+	container, err := sqlstore.New("sqlite3", "file:db/sql/commander.db?_foreign_keys=on", dbLog)
 	if err != nil {
 		panic(err)
 	}
