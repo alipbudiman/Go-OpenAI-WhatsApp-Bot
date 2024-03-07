@@ -131,7 +131,7 @@ func (cl *ClientWrapper) MessageHandler(evt interface{}) {
 		} else if strings.HasPrefix(txt, "chat gpt: ") {
 			cl.SendTextMessage(to, "Process . . .")
 			question := txtV2[len("chat gpt: "):]
-			responGPT, err := feature.ChatGPT(sender, question)
+			responGPT, err := feature.ChatGPT(sender, question, "")
 			if err != nil {
 				cl.SendTextMessage(to, "Error please check console for detail")
 				panic(err)
