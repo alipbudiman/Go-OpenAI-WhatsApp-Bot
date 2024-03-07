@@ -15,6 +15,13 @@ The Example of usage [Whatsmeow WhatsApp API](https://github.com/tulir/whatsmeow
 - Reader check
 - Anti Unsend
 - Make sticker
+- Brouadcast Group
+- Edit Message
+
+# WIP:
+- Creat GPT Assistant
+- Convertation with GPT Assistant
+- Create ThreadID (use for as convertation db)
 
 # Chat GPT
 

@@ -20,6 +20,7 @@ import (
 	"gowagpt/metadevlibs/helper"
 	"gowagpt/metadevlibs/object"
 	"gowagpt/metadevlibs/transport"
+
 	"go.mau.fi/whatsmeow"
 	"go.mau.fi/whatsmeow/store"
 	"go.mau.fi/whatsmeow/store/sqlstore"
@@ -36,19 +37,19 @@ type ClientWrapper struct {
 }
 
 var (
-	Log               *logrus.Logger
-	Client            *ClientWrapper
-	myJID             types.JID
-	ChatGPTApikey     string = "" // << your apikey here
-	ChatGPTProxy      string = "" 
-	checkRead                = make(map[string]int)
-	readerTemp               = make(map[string][]string)
-	antiUnsend               = make(map[types.JID][]string)
-	antiUnsend_img           = make(map[string]*waProto.ImageMessage)
-	antiUnsend_vid           = make(map[string]*waProto.VideoMessage)
-	antiUnsend_aud           = make(map[string]*waProto.AudioMessage)
-	UnsendRead               = make(map[string]int)
-	StkConv                  = make(map[string]int)
+	Log            *logrus.Logger
+	Client         *ClientWrapper
+	myJID          types.JID
+	ChatGPTApikey  string = "" // << your apikey here
+	ChatGPTProxy   string = ""
+	checkRead             = make(map[string]int)
+	readerTemp            = make(map[string][]string)
+	antiUnsend            = make(map[types.JID][]string)
+	antiUnsend_img        = make(map[string]*waProto.ImageMessage)
+	antiUnsend_vid        = make(map[string]*waProto.VideoMessage)
+	antiUnsend_aud        = make(map[string]*waProto.AudioMessage)
+	UnsendRead            = make(map[string]int)
+	StkConv               = make(map[string]int)
 )
 
 func (cl *ClientWrapper) MessageHandler(evt interface{}) {
@@ -172,11 +173,33 @@ func (cl *ClientWrapper) MessageHandler(evt interface{}) {
 				os.Remove(data)
 			}
 		} else if strings.HasPrefix(txt, "make sticker") {
-			go func() {
-				group_id := fmt.Sprintf("%v", to)
-				StkConv[group_id] = 1
-				cl.SendTextMessage(to, "👾 [Sticker] Please send image")
-			}()
+			group_id := fmt.Sprintf("%v", to)
+			StkConv[group_id] = 1
+			cl.SendTextMessage(to, "👾 [Sticker] Please send image")
+		} else if strings.HasPrefix(txt, "group broadcast: ") {
+			cl.SendTextMessage(to, "Process . . .")
+			message := txtV2[len("group broadcast: "):]
+			cl.SendMessageToAllGroup(to, message)
+		} else if strings.HasPrefix(txt, "hello world") {
+			hello_wolrd := []string{
+				"Hello, world",
+				"Programmed to work and not to feel",
+				"Not even sure that this is real",
+				"Hello, world",
+			}
+			res, err := cl.SendTextMessage(to, "Start . . .")
+			if err != nil {
+				cl.SendTextMessage(to, err.Error())
+				return
+			}
+			for _, hw := range hello_wolrd {
+				time.Sleep(time.Second * 1)
+				res, err = cl.EditMessage(to, res.ID, hw)
+				if err != nil {
+					cl.SendTextMessage(to, err.Error())
+					break
+				}
+			}
 		}
 
 		if !from_dm {

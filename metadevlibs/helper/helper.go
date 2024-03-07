@@ -25,10 +25,12 @@ func WriteDisplayMenu(from_dm bool) string {
 	h += "\n⊶ help"
 	h += "\n⊶ ping"
 	h += "\n⊶ help"
+	h += "\n⊶ hello world"
 	h += "\n⊶ send image"
 	h += "\n⊶ send video"
 	h += "\n⊶ chat gpt: `question`"
 	h += "\n⊶ dalle draw: `question`"
+	h += "\n⊶ group broadcast: `message`"
 	if !from_dm {
 		h += "\n⊶ say: `query`"
 		h += "\n⊶ tag all"
@@ -36,6 +38,13 @@ func WriteDisplayMenu(from_dm bool) string {
 		h += "\n⊶ anti unsend <on/off>"
 	}
 	return h
+}
+
+func FileExists(filepath string) bool {
+	if _, err := os.Stat(filepath); os.IsNotExist(err) {
+		return false
+	}
+	return true
 }
 
 func ConvertJPEtoWEBP(path string) (bool, string) {
@@ -215,7 +224,8 @@ func ConvertF4VtoMP4(inputFile string, outputFile string) (string, error) {
 func TrackFileTimeOut(time_in_second int, path string, result chan<- bool) {
 	for i := 1; i < time_in_second; i++ {
 		time.Sleep(1 * time.Second)
-		if _, err := os.Stat(path); os.IsNotExist(err) {
+		isXyz := FileExists(path)
+		if isXyz {
 			result <- true
 			break
 		}

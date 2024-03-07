@@ -9,7 +9,8 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-	"time"
+
+	"gowagpt/metadevlibs/helper"
 
 	"github.com/disintegration/imaging"
 	_ "github.com/mattn/go-sqlite3"
@@ -30,7 +31,7 @@ var (
 	Client *CLIENT
 )
 
-func (cl *CLIENT) SendMessageV2(evt interface{}, msg *string) {
+func (cl *CLIENT) SendMessageV2(evt interface{}, msg *string) (whatsmeow.SendResponse, error) {
 	v := evt.(*events.Message)
 	resp := &waProto.Message{
 		ExtendedTextMessage: &waProto.ExtendedTextMessage{
@@ -41,11 +42,13 @@ func (cl *CLIENT) SendMessageV2(evt interface{}, msg *string) {
 			},
 		},
 	}
-	cl.Client.SendMessage(context.Background(), v.Info.Sender, resp)
+	res, err := cl.Client.SendMessage(context.Background(), v.Info.Sender, resp)
+	return res, err
 }
 
-func (cl *CLIENT) SendTextMessage(jid types.JID, text string) {
-	cl.Client.SendMessage(context.Background(), jid, &waProto.Message{Conversation: proto.String(text)})
+func (cl *CLIENT) SendTextMessage(jid types.JID, text string) (whatsmeow.SendResponse, error) {
+	resp, err := cl.Client.SendMessage(context.Background(), jid, &waProto.Message{Conversation: proto.String(text)})
+	return resp, err
 }
 
 func ResizeImage(imagePath string, thumbnailPath string, h int, w int, q int) string {
@@ -62,25 +65,6 @@ func ResizeImage(imagePath string, thumbnailPath string, h int, w int, q int) st
 
 }
 
-func fileExists(filepath string) bool {
-	if _, err := os.Stat(filepath); os.IsNotExist(err) {
-		return false
-	}
-	return true
-}
-
-func TrackFileTimeOut(time_in_second int, path string, result chan<- bool) {
-	for i := 1; i < time_in_second; i++ {
-		time.Sleep(1 * time.Second)
-		isXyz := fileExists(path)
-		if isXyz {
-			result <- true
-			break
-		}
-	}
-	result <- false
-}
-
 func CreateVideoThumbnail(path string, thumbnailPath string) (string, error) {
 	cmd := exec.Command("ffmpeg", "-i", path, "-ss", "00:00:01.000", "-vframes", "1", thumbnailPath)
 	err3 := cmd.Run()
@@ -89,7 +73,7 @@ func CreateVideoThumbnail(path string, thumbnailPath string) (string, error) {
 		return "", err3
 	}
 	ch := make(chan bool)
-	go TrackFileTimeOut(10, thumbnailPath, ch)
+	go helper.TrackFileTimeOut(10, thumbnailPath, ch)
 	isExist := <-ch
 	if isExist {
 		return thumbnailPath, nil
@@ -127,22 +111,22 @@ func (cl *CLIENT) SendImageMessage(jid types.JID, path string, caption string) {
 	os.Remove(ThumbnailPath)
 }
 
-func (cl *CLIENT) SendVideoMessage(jid types.JID, path string, caption string) {
-	data, err1 := ioutil.ReadFile(path)
-	if err1 != nil {
-		fmt.Printf("Failed to read %s: %v", path, err1)
-		return
+func (cl *CLIENT) SendVideoMessage(jid types.JID, path string, caption string) (whatsmeow.SendResponse, error) {
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		fmt.Printf("Failed to read %s: %v", path, err)
+		return whatsmeow.SendResponse{}, err
 	}
-	uploaded, err2 := cl.Client.Upload(context.Background(), data, whatsmeow.MediaVideo)
-	if err2 != nil {
-		fmt.Printf("Failed to upload file: %v", err2)
-		return
-	}
-	thumbnailPath := strings.ReplaceAll(path, ".mp4", "Thumbnail.jpg")
-	thumbnailPath, err := CreateVideoThumbnail(path, thumbnailPath)
+	uploaded, err := cl.Client.Upload(context.Background(), data, whatsmeow.MediaVideo)
 	if err != nil {
 		fmt.Printf("Failed to upload file: %v", err)
-		return
+		return whatsmeow.SendResponse{}, err
+	}
+	thumbnailPath := strings.ReplaceAll(path, ".mp4", "Thumbnail.jpg")
+	thumbnailPath, err = CreateVideoThumbnail(path, thumbnailPath)
+	if err != nil {
+		fmt.Printf("Failed to upload file: %v", err)
+		return whatsmeow.SendResponse{}, err
 	}
 	RethumbnailPath := strings.ReplaceAll(thumbnailPath, "Thumbnail.jpg", "ReThumbnail.jpg")
 	imgRe := ResizeImage(thumbnailPath, RethumbnailPath, 30, 30, 90)
@@ -163,11 +147,12 @@ func (cl *CLIENT) SendVideoMessage(jid types.JID, path string, caption string) {
 		ThumbnailSha256:     respX.FileSHA256,
 		ThumbnailEncSha256:  respX.FileEncSHA256,
 	}}
-	cl.Client.SendMessage(context.Background(), jid, msg)
+	res, err := cl.Client.SendMessage(context.Background(), jid, msg)
 	os.Remove(RethumbnailPath)
+	return res, err
 }
 
-func (cl *CLIENT) SendMention(jid types.JID, text string, mentionList []string) {
+func (cl *CLIENT) SendMention(jid types.JID, text string, mentionList []string) (whatsmeow.SendResponse, error) {
 	msg := &waProto.Message{
 		ExtendedTextMessage: &waProto.ExtendedTextMessage{
 			Text: proto.String(text),
@@ -176,19 +161,20 @@ func (cl *CLIENT) SendMention(jid types.JID, text string, mentionList []string) 
 			},
 		},
 	}
-	cl.Client.SendMessage(context.Background(), jid, msg)
+	res, err := cl.Client.SendMessage(context.Background(), jid, msg)
+	return res, err
 }
 
-func (cli *CLIENT) SendStickerMessage(jid types.JID, path string, animated bool) (bool, error) {
-	data, err1 := ioutil.ReadFile(path)
-	if err1 != nil {
-		fmt.Printf("Failed to read %s: %v", path, err1)
-		return false, err1
+func (cli *CLIENT) SendStickerMessage(jid types.JID, path string, animated bool) (whatsmeow.SendResponse, error) {
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		fmt.Printf("Failed to read %s: %v", path, err)
+		return whatsmeow.SendResponse{}, err
 	}
-	uploaded, err2 := cli.Client.Upload(context.Background(), data, whatsmeow.MediaImage)
-	if err2 != nil {
-		fmt.Printf("Failed to upload file: %v", err2)
-		return false, err2
+	uploaded, err := cli.Client.Upload(context.Background(), data, whatsmeow.MediaImage)
+	if err != nil {
+		fmt.Printf("Failed to upload file: %v", err)
+		return whatsmeow.SendResponse{}, err
 	}
 	msg := &waProto.Message{StickerMessage: &waProto.StickerMessage{
 		Url:           proto.String(uploaded.URL),
@@ -200,11 +186,29 @@ func (cli *CLIENT) SendStickerMessage(jid types.JID, path string, animated bool)
 		FileLength:    proto.Uint64(uint64(len(data))),
 		IsAnimated:    proto.Bool(animated),
 	}}
-	_, err3 := cli.Client.SendMessage(context.Background(), jid, msg)
-	if err3 != nil {
-		return false, err3
+	res, err := cli.Client.SendMessage(context.Background(), jid, msg)
+	return res, err
+}
+
+func (cl *CLIENT) SendMessageToAllGroup(to types.JID, message string) {
+	groups, err := cl.GetJoinedGroups(false)
+	if err != nil {
+		cl.SendTextMessage(to, err.Error())
+		return
 	}
-	return true, nil
+	count := 0
+	for _, group := range groups {
+		cl.SendTextMessage(group.JID, message)
+		count += 1
+	}
+	cl.SendTextMessage(to, fmt.Sprintf("Success group broadcast to %d group", count))
+}
+
+func (cli *CLIENT) EditMessage(jid types.JID, id types.MessageID, text string) (whatsmeow.SendResponse, error) {
+	resp, err := cli.Client.SendMessage(context.Background(), jid, cli.Client.BuildEdit(jid, id, &waProto.Message{
+		Conversation: proto.String(text),
+	}))
+	return resp, err
 }
 
 func (cl *CLIENT) GetGroup(jid types.JID) *types.GroupInfo {
@@ -223,4 +227,39 @@ func (cl *CLIENT) GetMemberList(jid types.JID) []string {
 		memberList = append(memberList, listCnv[0])
 	}
 	return memberList
+}
+
+func (cl *CLIENT) GetJoinedGroups(with_community bool) ([]*types.GroupInfo, error) {
+	glist := []*types.GroupInfo{}
+	glist_delegation := []string{}
+	g, err := cl.Client.GetJoinedGroups()
+	if err != nil {
+		return glist, err
+	}
+	for _, c := range g {
+		if !c.GroupParent.IsParent {
+			glist = append(glist, c)
+		} else {
+			if with_community {
+				sg, err := cl.Client.GetSubGroups(c.JID)
+				if err == nil {
+					for _, dsg := range sg {
+						if dsg.IsDefaultSubGroup {
+							if dgs_id := cl.GetGroup(dsg.JID); dgs_id != nil {
+								if !helper.InArray(glist_delegation, dsg.JID.String()) {
+									glist = append(glist, dgs_id)
+									glist_delegation = append(glist_delegation, dsg.JID.String())
+								}
+								break
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	if len(glist) <= 0 {
+		return glist, errors.New("error, empty data on group list")
+	}
+	return glist, nil
 }
