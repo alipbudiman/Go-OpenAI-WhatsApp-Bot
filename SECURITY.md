@@ -2,10 +2,10 @@
 
 ## Supported Versions
 
-Name     | Version       | Supported          |
--------  | -------       | ------------------ |
-Golang   | 1.22.1.x      | :white_check_mark: |
-Ffmpeg   | 5.0.x         | :white_check_mark: |
+Name     | Version     | Supported          |
+-------  | -------     | ------------------ |
+Golang   | 1.22.1      | :white_check_mark: |
+Ffmpeg   | 5.0.        | :white_check_mark: |
 
 ## Terms of Service
 
