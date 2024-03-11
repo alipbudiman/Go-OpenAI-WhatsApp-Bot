@@ -1,6 +1,7 @@
 package helper
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"image/jpeg"
@@ -47,8 +48,8 @@ func FileExists(filepath string) bool {
 }
 
 func ConvertJPEtoWEBP(path string) (bool, string) {
-		webp_path := strings.Split(path, ".jpe")[0]+".webp"
-		cmd := webpbin.NewCWebP().
+	webp_path := strings.Split(path, ".jpe")[0] + ".webp"
+	cmd := webpbin.NewCWebP().
 		Quality(70).
 		InputFile(path).
 		OutputFile(webp_path)
@@ -62,7 +63,7 @@ func ConvertJPEtoWEBP(path string) (bool, string) {
 func SenderJIDConvert(jid types.JID) (types.JID, bool) {
 	j := fmt.Sprintf("%v", jid)
 	x := strings.Split(j, "@")
-	y := strings.Split(x[0], ".") 
+	y := strings.Split(x[0], ".")
 	z := y[0] + "@" + x[1]
 	jid, ok := ParseJIDUser(z)
 	if !ok {
@@ -211,4 +212,12 @@ func TrackFileTimeOut(time_in_second int, path string, result chan<- bool) {
 		}
 	}
 	result <- false
+}
+
+func StrucPrettyPrint(data interface{}) (string, error) {
+	jsonData, err := json.MarshalIndent(data, "", "  ")
+	if err != nil {
+		return "", err
+	}
+	return string(jsonData), nil
 }

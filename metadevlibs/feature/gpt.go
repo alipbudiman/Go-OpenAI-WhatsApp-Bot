@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strings"
 
+	hp "gowagpt/metadevlibs/helper"
 	tt "gowagpt/metadevlibs/transport"
 
 	"github.com/tidwall/gjson"
@@ -164,16 +165,16 @@ func assistantNameValidation(input string) bool {
 	return valid
 }
 
-func CreateGPTAssistant(instructions string, name string, costum_models string) ([]string, error) {
+func CreateGPTAssistant(instructions string, name string, costum_models string) (string, error) {
 	if Apikey == "" {
-		return nil, errors.New("please input OpenAI Apikey, get apikey here https://platform.openai.com/account/api-keys")
+		return "", errors.New("please input OpenAI Apikey, get apikey here https://platform.openai.com/account/api-keys")
 	}
 	if len(instructions) > 32768 && instructions != "" {
-		return nil, errors.New("the maximum length is 32768 characters")
+		return "", errors.New("the maximum length is 32768 characters")
 
 	}
 	if !assistantNameValidation(name) && name != "" {
-		return nil, errors.New("name must be a-z, A-Z, 0-9, or contain underscores and dashes, with a maximum length of 64")
+		return "", errors.New("name must be a-z, A-Z, 0-9, or contain underscores and dashes, with a maximum length of 64")
 
 	}
 	gpt_models := costum_models
@@ -186,10 +187,72 @@ func CreateGPTAssistant(instructions string, name string, costum_models string) 
 		"model":        gpt_models,
 	})
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	var payload = bytes.NewBuffer(requestBody)
 	request, err := http.NewRequest("POST", "https://api.openai.com/v1/assistants", payload)
+	if err != nil {
+		return "", err
+	}
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Authorization", "Bearer "+Apikey)
+	request.Header.Set("OpenAI-Beta", "assistants=v1")
+	response, err := tt.Transporter(request, Proxy)
+	if err != nil {
+		return "", err
+	} else {
+		defer response.Body.Close()
+		body, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			return "", err
+		}
+		id := gjson.Get(string(body), "id").String()
+		if id == "" {
+			rejected, err := hp.StrucPrettyPrint(body)
+			if err != nil {
+				return "", err
+			}
+			if rejected != "" {
+				return "", errors.New(strings.ToLower(rejected))
+			}
+		}
+		return id, nil
+	}
+}
+
+func CreateGPTThreadAssistant() (string, error) {
+	request, err := http.NewRequest("POST", "https://api.openai.com/v1/threads", nil)
+	if err != nil {
+		return "", err
+	}
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Authorization", "Bearer "+Apikey)
+	request.Header.Set("OpenAI-Beta", "assistants=v1")
+	response, err := tt.Transporter(request, Proxy)
+	if err != nil {
+		return "", err
+	} else {
+		defer response.Body.Close()
+		body, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			return "", err
+		}
+		id := gjson.Get(string(body), "id").String()
+		if id == "" {
+			rejected, err := hp.StrucPrettyPrint(body)
+			if err != nil {
+				return "", err
+			}
+			if rejected != "" {
+				return "", errors.New(strings.ToLower(rejected))
+			}
+		}
+		return id, nil
+	}
+}
+
+func GetGPTHistoryChatFromThread(thread_id string) ([]GPTAssistantHistoryMessage, error) {
+	request, err := http.NewRequest("POST", fmt.Sprintf("https://api.openai.com/v1/threads/%s/messages", thread_id), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -205,19 +268,20 @@ func CreateGPTAssistant(instructions string, name string, costum_models string) 
 		if err != nil {
 			return nil, err
 		}
-		rejected := gjson.Get(string(body), "error.message").String()
-		if rejected != "" {
-			return nil, errors.New(strings.ToLower(rejected))
+		object := gjson.Get(string(body), "object").String()
+		if object == "" {
+			return nil, errors.New("fail to load content")
 		}
-		created := gjson.Get(string(body), "created").String()
-		if created == "" {
-			return nil, errors.New("oops.. something when wrong")
-		}
-		result := gjson.Get(string(body), "data.#.url")
-		var imgData []string
-		for _, url := range result.Array() {
-			imgData = append(imgData, url.String())
-		}
-		return imgData, nil
+		data := gjson.Get(string(body), "data")
+		var contents []GPTAssistantHistoryMessage
+		data.ForEach(func(key, value gjson.Result) bool {
+			contents = append(contents, GPTAssistantHistoryMessage{
+				Role:  gjson.Get(value.String(), "role").String(),
+				Value: gjson.Get(value.String(), "content.text.value").String(),
+			})
+			return true
+		})
+		return contents, nil
 	}
+
 }

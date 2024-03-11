@@ -1,6 +1,6 @@
 # Go-OpenAI-WhatsApp-Bot
 
-[![GO](https://img.shields.io/badge/golang-v1.19.9^-blue)](https://go.dev/)&nbsp;&nbsp;[![UBUNTU](https://img.shields.io/badge/ubuntu-v18.0-orange)](https://releases.ubuntu.com/impish/)&nbsp;&nbsp;[![SOURCE](https://img.shields.io/badge/license-MIT-green)](https://github.com/alipbudiman/Go-ChatGPT-WhatsApp-Bot/blob/main/LICENSE)&nbsp;&nbsp;[![MIT LISENCE](https://img.shields.io/badge/sponsors-WhatsApp-brightgreen)](https://wa.me/6282113791904)
+[![GO](https://img.shields.io/badge/golang-v1.22.1^-blue)](https://go.dev/)&nbsp;&nbsp;[![UBUNTU](https://img.shields.io/badge/ubuntu-v22.4-orange)](https://releases.ubuntu.com/impish/)&nbsp;&nbsp;[![SOURCE](https://img.shields.io/badge/license-MIT-green)](https://github.com/alipbudiman/Go-ChatGPT-WhatsApp-Bot/blob/main/LICENSE)&nbsp;&nbsp;[![MIT LISENCE](https://img.shields.io/badge/sponsors-WhatsApp-brightgreen)](https://wa.me/6282113791904)
 
 WhatsApp MultiDevice Bot client API Example using Go Programming Language and OpenAI.
 
@@ -47,8 +47,8 @@ Free invite & use Whatsapp bot [Wa Nexus](https://wa-nexus.web.app/)
 Add OpeinAI Api-key for access Chat GPT feature (if not fill, bot still running) and Proxy for Chat GPT feature (optional) 
 
 ```go
-	ChatGPTApikey     string = "" // << your apikey here
-	ChatGPTProxy      string = "" 
+ChatGPTApikey     string = "" // << your apikey here
+ChatGPTProxy      string = "" 
 ```
 
 

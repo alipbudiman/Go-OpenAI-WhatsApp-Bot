@@ -397,6 +397,7 @@ func main() {
 	if _, err := os.Stat("db/sql"); os.IsNotExist(err) {
 		os.MkdirAll("db/sql", 0755)
 	}
+	
 	container, err := sqlstore.New("sqlite3", "file:db/sql/commander.db?_foreign_keys=on", dbLog)
 	if err != nil {
 		panic(err)
