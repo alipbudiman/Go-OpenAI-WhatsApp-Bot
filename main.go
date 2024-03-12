@@ -252,11 +252,11 @@ func (cl *ClientWrapper) MessageHandler(evt interface{}) {
 }
 
 func (cl *ClientWrapper) ProcessReader(evt *events.Receipt) {
-	param1 := fmt.Sprintf("%v", evt.Chat)
+	param1 := evt.Chat.String()
 	if checkRead[param1] == 1 {
-		if strings.Contains(evt.Type.GoString(), "events.ReceiptTypeRead") {
+		if evt.Type == types.ReceiptTypeRead {
 			go func() {
-				param2 := fmt.Sprintf("%v", evt.Sender)
+				param2 := evt.Sender.String()
 				if !helper.InArray(readerTemp[param1], param2) && evt.Sender.String() != myJID.String() {
 					readerTemp[param1] = append(readerTemp[param1], param2)
 					jid, param := helper.ParseJIDUser(param1)
@@ -397,7 +397,7 @@ func main() {
 	if _, err := os.Stat("db/sql"); os.IsNotExist(err) {
 		os.MkdirAll("db/sql", 0755)
 	}
-	
+
 	container, err := sqlstore.New("sqlite3", "file:db/sql/commander.db?_foreign_keys=on", dbLog)
 	if err != nil {
 		panic(err)
