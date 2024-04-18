@@ -54,6 +54,12 @@ ChatGPTProxy      string = ""
 
 To get open AI api-key, you can visit open ai platform. [Click here](https://platform.openai.com/account/api-keys)
 
+# Update go module
+
+```
+go get -u
+```
+
 # Run
 
 ```
