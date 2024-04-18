@@ -57,7 +57,7 @@ To get open AI api-key, you can visit open ai platform. [Click here](https://pla
 # Update go module
 
 ```
-go get -u
+$ go get -u
 ```
 
 # Run
